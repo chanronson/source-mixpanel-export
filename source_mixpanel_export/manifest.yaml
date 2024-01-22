@@ -1,0 +1,265 @@
+spec:
+  type: Spec
+  documentation_url: https://docs.airbyte.com/integrations/sources/mixpanel-export
+  connection_specification:
+    type: object
+    $schema: http://json-schema.org/draft-07/schema#
+    required:
+      - api_key
+      - start_date
+    properties:
+      api_key:
+        type: string
+        order: 0
+        title: API Key
+        description: Basic ABCDEFG123456
+        airbyte_secret: true
+      end_date:
+        type: string
+        order: 2
+        title: End Date
+        format: date
+        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+        description: >-
+          The date in the format YYYY-MM-DD. Any data after this date will not
+          be replicated. Left empty to always sync to most recent date (e.g.
+          2021-11-16) 
+      start_date:
+        type: string
+        order: 1
+        title: Start Date
+        format: date
+        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+        description: >-
+          The date in the format YYYY-MM-DD. Any data before this date will
+          not           be replicated. If this option is not set, the connector
+          will replicate           data from up to one year ago by default.
+          (e.g. 2021-11-16) 
+    additionalProperties: true
+type: DeclarativeSource
+check:
+  type: CheckStream
+  stream_names:
+    - Export
+streams:
+  - name: Export
+    type: DeclarativeStream
+    retriever:
+      type: SimpleRetriever
+      paginator:
+        type: NoPagination
+      requester:
+        path: export
+        type: HttpRequester
+        url_base: https://data.mixpanel.com/api/2.0/
+        http_method: GET
+        authenticator:
+          type: ApiKeyAuthenticator
+          api_token: '{{ config[''api_key''] }}'
+          inject_into:
+            type: RequestOption
+            field_name: authorization
+            inject_into: header
+        request_headers:
+          accept: text/plain
+        error_handler:
+          type: CompositeErrorHandler
+          error_handlers:
+            - type: DefaultErrorHandler
+              backoff_strategies:
+                - type: ExponentialBackoffStrategy
+                  factor: 5
+        request_body_json: {}
+        request_parameters: {}
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: CustomRecordExtractor
+          class_name: source_mixpanel_export.components.MixpanelExportExtractor
+          field_path:
+            - [ ]
+    primary_key: ['distinct_id','time']
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        $schema: http://json-schema.org/draft-07/schema#
+        additionalProperties: true
+        properties:
+          time:
+            type:
+              - 'null'
+              - string
+            format: date-time
+          distinct_id:
+            type:
+              - 'null'
+              - string
+          browser:
+            type:
+              - 'null'
+              - string
+          browser_version:
+            type:
+              - 'null'
+              - string
+          city:
+            type:
+              - 'null'
+              - string
+          current_url:
+            type:
+              - 'null'
+              - string
+          device_id:
+            type:
+              - 'null'
+              - string
+          initial_referrer:
+            type:
+              - 'null'
+              - string
+          initial_referring_domain:
+            type:
+              - 'null'
+              - string
+          insert_id:
+            type:
+              - 'null'
+              - string
+          lib_version:
+            type:
+              - 'null'
+              - string
+          mp_api_endpoint:
+            type:
+              - 'null'
+              - string
+          mp_api_timestamp_ms:
+            type:
+              - 'null'
+              - string
+          os:
+            type:
+              - 'null'
+              - string
+          region:
+            type:
+              - 'null'
+              - string
+          screen_height:
+            type:
+              - 'null'
+              - string
+          screen_width:
+            type:
+              - 'null'
+              - string
+          user_id:
+            type:
+              - 'null'
+              - string
+          currentUrl:
+            type:
+              - 'null'
+              - string
+          eventName:
+            type:
+              - 'null'
+              - string
+          memberEmail:
+            type:
+              - 'null'
+              - string
+          memberId:
+            type:
+              - 'null'
+              - string
+          memberRole:
+            type:
+              - 'null'
+              - string
+          mp_country_code:
+            type:
+              - 'null'
+              - string
+          mp_lib:
+            type:
+              - 'null'
+              - string
+          mp_processing_time_ms:
+            type:
+              - 'null'
+              - string
+          eventProperties:
+            type:
+              - 'null'
+              - string
+          hubspotutk:
+            type:
+              - 'null'
+              - string
+          device:
+            type:
+              - 'null'
+              - string
+          referrer:
+            type:
+              - 'null'
+              - string
+          referring_domain:
+            type:
+              - 'null'
+              - string
+          utm_campaign:
+            type:
+              - 'null'
+              - string
+          utm_content:
+            type:
+              - 'null'
+              - string
+          utm_medium:
+            type:
+              - 'null'
+              - string
+          utm_source:
+            type:
+              - 'null'
+              - string
+          search_engine:
+            type:
+              - 'null'
+              - string
+          utm_term:
+            type:
+              - 'null'
+              - string
+    incremental_sync:
+      step: P1D
+      type: DatetimeBasedCursor
+      cursor_field: time
+      end_datetime:
+        type: MinMaxDatetime
+        datetime: '{{ now_utc().strftime(''%Y-%m-%dT%H:%M:%SZ'') }}'
+        datetime_format: '%Y-%m-%dT%H:%M:%SZ'
+      start_datetime:
+        type: MinMaxDatetime
+        datetime: '{{ config[''start_date''] }}'
+        datetime_format: '%Y-%m-%d'
+      datetime_format: '%Y-%m-%d'
+      end_time_option:
+        type: RequestOption
+        field_name: to_date
+        inject_into: request_parameter
+      lookback_window: P1D
+      start_time_option:
+        type: RequestOption
+        field_name: from_date
+        inject_into: request_parameter
+      cursor_granularity: P1D
+      cursor_datetime_formats:
+        - '%Y-%m-%dT%H:%M:%Sz'
+version: 0.51.1
+metadata:
+  autoImportSchema:
+    Export: true

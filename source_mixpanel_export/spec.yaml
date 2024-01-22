@@ -1,0 +1,37 @@
+  connection_specification:
+    $schema: http://json-schema.org/draft-07/schema#
+    type: object
+    required:
+      - api_key
+      - start_date
+    properties:
+      api_key:
+        type: string
+        title: API Key
+        airbyte_secret: true
+        order: 0
+        description: Basic ABCDEFG123456
+      start_date:
+        type: string
+        order: 1
+        title: Start Date
+        format: date
+        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+        description: >-
+          The date in the format YYYY-MM-DD. Any data before this date will
+          not           be replicated. If this option is not set, the connector
+          will replicate           data from up to one year ago by default.
+          (e.g. 2021-11-16) 
+      end_date:
+        type: string
+        order: 2
+        title: End Date
+        format: date
+        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+        description: >-
+          The date in the format YYYY-MM-DD. Any data after this date will not
+          be replicated. Left empty to always sync to most recent date (e.g.
+          2021-11-16) 
+    additionalProperties: true
+  documentation_url: https://example.org
+  type: Spec
