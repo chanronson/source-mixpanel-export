@@ -10,6 +10,7 @@ import zipfile
 from dataclasses import InitVar, dataclass
 from typing import Any, Iterable, Mapping, MutableMapping, Iterator, NamedTuple, List
 from collections import defaultdict
+from time import sleep
 
 import pendulum
 import requests
@@ -105,6 +106,8 @@ class MixpanelExportExtractor(RecordExtractor):
 
     def extract_records(self, response: requests.Response) -> List[Record]:
         # We prefer response.iter_lines() to response.text.split_lines() as the later can missparse text properties embeding linebreaks
+        logger.info('Sleep for 120sec due to Mixpanel ratelimit')
+        sleep(120)
         for record in self.iter_dicts(response.iter_lines(decode_unicode=True)):
             # transform record into flat dict structure
             item = {"event": record["event"]}
