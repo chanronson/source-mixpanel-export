@@ -235,7 +235,7 @@ streams:
               - 'null'
               - string
     incremental_sync:
-      step: P1D
+      step: P1W
       type: DatetimeBasedCursor
       cursor_field: time
       end_datetime:
