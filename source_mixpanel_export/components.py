@@ -108,6 +108,7 @@ class MixpanelExportExtractor(RecordExtractor):
         # We prefer response.iter_lines() to response.text.split_lines() as the later can missparse text properties embeding linebreaks
         logger.info('Sleep for 120sec due to Mixpanel ratelimit')
         sleep(120)
+        items = []
         for record in self.iter_dicts(response.iter_lines(decode_unicode=True)):
             # transform record into flat dict structure
             item = {"event": record["event"]}
@@ -120,5 +121,5 @@ class MixpanelExportExtractor(RecordExtractor):
             # convert timestamp to datetime string
             item["time"] = pendulum.from_timestamp(int(item["time"]), tz="UTC").to_iso8601_string()
             #logger.info(f"Item: {item}")
-            return [item]
-
+            items.append(item)
+        return items
